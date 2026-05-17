@@ -326,12 +326,35 @@ footer{border-top:1px solid var(--muted);padding:2.5rem 3rem;display:flex;justif
   <div style="max-width:1100px;margin:0 auto;">
     <p class="sec-label">Investment</p>
     <h2 class="sec-title">Clear pricing.<br><span class="g">No surprises.</span></h2>
-    <div class="price-grid">
+
+    <!-- Market toggle -->
+    <div style="display:flex;align-items:center;gap:1rem;margin-top:2rem;margin-bottom:.5rem;flex-wrap:wrap;">
+      <div style="display:flex;background:var(--bg3);border:1px solid var(--muted);padding:4px;gap:4px;">
+        <button id="toggle-pk" onclick="switchMarket('pk')" style="padding:.5rem 1.4rem;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;background:var(--neon);color:#000;font-weight:700;font-family:'Space Grotesk',sans-serif;transition:all .3s;">🇵🇰 Pakistan</button>
+        <button id="toggle-intl" onclick="switchMarket('intl')" style="padding:.5rem 1.4rem;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:var(--dim);font-family:'Space Grotesk',sans-serif;transition:all .3s;">🌍 International</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <div id="install-toggle" onclick="toggleInstall()" style="width:38px;height:20px;background:var(--muted);border-radius:20px;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;">
+          <div id="install-knob" style="position:absolute;width:16px;height:16px;background:var(--dim);border-radius:50%;top:2px;left:2px;transition:all .3s;"></div>
+        </div>
+        <span style="font-size:.78rem;color:var(--dim);">Show installment plan</span>
+      </div>
+    </div>
+
+    <!-- PK installment note -->
+    <div id="install-note" style="display:none;background:rgba(0,255,178,0.06);border:1px solid rgba(0,255,178,0.2);padding:.8rem 1.2rem;margin-bottom:1.5rem;font-size:.82rem;color:var(--neon);">
+      ✦ Installment plan available — pay in 2 easy parts. 60% upfront, 40% on delivery.
+    </div>
+
+    <div class="price-grid" id="pricing-grid">
+
+      <!-- STARTER -->
       <div class="pc">
         <span class="pc-tag">Starter</span>
         <div class="pc-name">Website Only</div>
-        <div class="pc-price">PKR 50k</div>
-        <div class="pc-period">one-time · $200 USD</div>
+        <div class="pc-price" id="p1-price">PKR 25k</div>
+        <div class="pc-period" id="p1-period">one-time · no monthly fee</div>
+        <div id="p1-install" style="display:none;margin-top:4px;font-size:.78rem;color:var(--neon);">or PKR 15k + 10k on delivery</div>
         <hr class="pc-divider">
         <div class="pc-feat"><span class="check">✦</span> 5-page 3D aesthetic website</div>
         <div class="pc-feat"><span class="check">✦</span> Mobile responsive design</div>
@@ -340,11 +363,14 @@ footer{border-top:1px solid var(--muted);padding:2.5rem 3rem;display:flex;justif
         <div class="pc-feat"><span class="check">✦</span> 1 revision round</div>
         <button class="pc-btn" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get started →</button>
       </div>
+
+      <!-- PRO -->
       <div class="pc feat">
         <span class="pc-tag">Pro</span>
         <div class="pc-name">Website + Agent</div>
-        <div class="pc-price">PKR 100k</div>
-        <div class="pc-period">one-time · $450 USD + monthly retainer</div>
+        <div class="pc-price" id="p2-price">PKR 60k</div>
+        <div class="pc-period" id="p2-period">one-time · + PKR 8k/month</div>
+        <div id="p2-install" style="display:none;margin-top:4px;font-size:.78rem;color:var(--neon);">or PKR 36k + 24k on delivery</div>
         <hr class="pc-divider">
         <div class="pc-feat"><span class="check">✦</span> 7-page luxury 3D website</div>
         <div class="pc-feat"><span class="check">✦</span> WhatsApp AI agent setup</div>
@@ -353,11 +379,14 @@ footer{border-top:1px solid var(--muted);padding:2.5rem 3rem;display:flex;justif
         <div class="pc-feat"><span class="check">✦</span> 1 month free support</div>
         <button class="pc-btn" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get started →</button>
       </div>
+
+      <!-- ELITE -->
       <div class="pc">
         <span class="pc-tag">Elite</span>
         <div class="pc-name">Full Suite</div>
-        <div class="pc-price">PKR 220k</div>
-        <div class="pc-period">one-time · $900 USD + monthly retainer</div>
+        <div class="pc-price" id="p3-price">PKR 130k</div>
+        <div class="pc-period" id="p3-period">one-time · + PKR 18k/month</div>
+        <div id="p3-install" style="display:none;margin-top:4px;font-size:.78rem;color:var(--neon);">or PKR 78k + 52k on delivery</div>
         <hr class="pc-divider">
         <div class="pc-feat"><span class="check">✦</span> Premium website 10+ pages</div>
         <div class="pc-feat"><span class="check">✦</span> WhatsApp + Voice agent</div>
@@ -548,6 +577,63 @@ window.addEventListener('scroll',()=>{
   const hero=document.getElementById('hero');
   if(hero)hero.style.transform=`translateY(${y*.4}px)`;
 });
+
+/* --- Pricing market toggle --- */
+const prices={
+  pk:{
+    p1:{price:'PKR 25k',period:'one-time · no monthly fee',install:'or PKR 15k + 10k on delivery'},
+    p2:{price:'PKR 60k',period:'one-time · + PKR 8k/month',install:'or PKR 36k + 24k on delivery'},
+    p3:{price:'PKR 130k',period:'one-time · + PKR 18k/month',install:'or PKR 78k + 52k on delivery'},
+  },
+  intl:{
+    p1:{price:'$120 USD',period:'one-time · no monthly fee',install:'or $72 + $48 on delivery'},
+    p2:{price:'$420 USD',period:'one-time · + $60/month',install:'or $252 + $168 on delivery'},
+    p3:{price:'$900 USD',period:'one-time · + $120/month',install:'or $540 + $360 on delivery'},
+  }
+};
+let currentMarket='pk', installOn=false;
+
+function switchMarket(m){
+  currentMarket=m;
+  const pk=document.getElementById('toggle-pk');
+  const intl=document.getElementById('toggle-intl');
+  if(m==='pk'){
+    pk.style.background='var(--neon)';pk.style.color='#000';pk.style.fontWeight='700';
+    intl.style.background='transparent';intl.style.color='var(--dim)';intl.style.fontWeight='400';
+  } else {
+    intl.style.background='var(--neon)';intl.style.color='#000';intl.style.fontWeight='700';
+    pk.style.background='transparent';pk.style.color='var(--dim)';pk.style.fontWeight='400';
+  }
+  updatePrices();
+}
+
+function toggleInstall(){
+  installOn=!installOn;
+  const tog=document.getElementById('install-toggle');
+  const knob=document.getElementById('install-knob');
+  const note=document.getElementById('install-note');
+  if(installOn){
+    tog.style.background='var(--neon)';
+    knob.style.left='20px';knob.style.background='#000';
+    note.style.display='block';
+  } else {
+    tog.style.background='var(--muted)';
+    knob.style.left='2px';knob.style.background='var(--dim)';
+    note.style.display='none';
+  }
+  updatePrices();
+}
+
+function updatePrices(){
+  const d=prices[currentMarket];
+  ['p1','p2','p3'].forEach(id=>{
+    document.getElementById(id+'-price').textContent=d[id].price;
+    document.getElementById(id+'-period').textContent=d[id].period;
+    const ins=document.getElementById(id+'-install');
+    ins.style.display=installOn?'block':'none';
+    ins.textContent=d[id].install;
+  });
+}
 </script>
 </body>
 </html>
