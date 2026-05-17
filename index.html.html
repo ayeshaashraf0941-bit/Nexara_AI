@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexAI — AI Automation Agency</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --neon:#00FFB2;--neon2:#B400FF;--neon3:#00B4FF;
+  --bg:#04040A;--bg2:#08081A;--bg3:#0D0D1F;
+  --text:#F0F0FF;--dim:#6A6A9A;--muted:#2A2A4A;
+  --glass:rgba(0,255,178,0.04);--glass-border:rgba(0,255,178,0.15);
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;cursor:none;}
+
+/* Cursor */
+#cur{position:fixed;width:10px;height:10px;background:var(--neon);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 16px var(--neon);transition:width .2s,height .2s;}
+#cur-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(0,255,178,0.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .1s ease;left:-100px;top:-100px;}
+
+/* Canvas bg */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* Nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:1.4rem 3rem;display:flex;justify-content:space-between;align-items:center;background:rgba(4,4,10,0.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,255,178,0.08);}
+.logo{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;}
+.logo span{color:var(--neon);text-shadow:0 0 20px var(--neon);}
+.nav-links{display:flex;gap:2.5rem;}
+.nav-links a{font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .3s;}
+.nav-links a:hover{color:var(--neon);}
+.nav-cta{padding:.55rem 1.4rem;border:1px solid var(--neon);color:var(--neon);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;transition:all .3s;font-family:'Space Grotesk',sans-serif;}
+.nav-cta:hover{background:var(--neon);color:#000;}
+
+/* Hero */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:8rem 2rem 4rem;position:relative;z-index:10;}
+.hero-eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--neon);margin-bottom:1.5rem;opacity:0;animation:fu .8s .2s forwards;}
+h1{font-family:'Syne',sans-serif;font-size:clamp(2.8rem,8vw,5.8rem);font-weight:800;line-height:1.0;letter-spacing:-.03em;margin-bottom:1.5rem;opacity:0;animation:fu .8s .4s forwards;}
+h1 .g{background:linear-gradient(135deg,var(--neon),var(--neon3),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:1.05rem;color:var(--dim);max-width:500px;line-height:1.7;margin-bottom:3rem;opacity:0;animation:fu .8s .6s forwards;}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;opacity:0;animation:fu .8s .8s forwards;}
+.btn-neon{padding:.9rem 2.2rem;background:var(--neon);color:#000;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;border:none;cursor:pointer;transition:all .3s;box-shadow:0 0 30px rgba(0,255,178,0.3);text-decoration:none;display:inline-block;}
+.btn-neon:hover{box-shadow:0 0 50px rgba(0,255,178,0.6);transform:translateY(-2px);}
+.btn-ghost{padding:.9rem 2.2rem;border:1px solid rgba(0,255,178,0.3);color:var(--text);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .3s;background:transparent;text-decoration:none;display:inline-block;}
+.btn-ghost:hover{border-color:var(--neon);color:var(--neon);}
+
+/* Floating stats */
+.float-stats{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;margin-top:4rem;opacity:0;animation:fu .9s 1s forwards;}
+.fstat{background:rgba(0,255,178,0.05);border:1px solid rgba(0,255,178,0.15);backdrop-filter:blur(20px);padding:1.2rem 1.8rem;text-align:center;animation:float 4s ease-in-out infinite;}
+.fstat:nth-child(2){animation-delay:-1.4s;}
+.fstat:nth-child(3){animation-delay:-2.8s;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.fstat-num{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--neon);text-shadow:0 0 20px var(--neon);}
+.fstat-lbl{font-size:.72rem;color:var(--dim);letter-spacing:.06em;margin-top:3px;}
+
+@keyframes fu{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+
+/* 3D Canvas for hero shapes */
+#hero-canvas{position:absolute;inset:0;pointer-events:none;z-index:1;}
+.hero-content{position:relative;z-index:2;}
+
+/* Section */
+.sec{padding:7rem 2rem;max-width:1100px;margin:0 auto;position:relative;z-index:10;}
+.sec-full{padding:7rem 2rem;position:relative;z-index:10;}
+.sec-label{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--neon);margin-bottom:1rem;}
+.sec-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,4.5vw,3rem);font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:1.5rem;}
+.sec-title .g{background:linear-gradient(135deg,var(--neon),var(--neon3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* Services */
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.5rem;margin-top:3rem;}
+.svc-card{background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(20px);padding:2.2rem;position:relative;overflow:hidden;transition:border-color .4s,transform .3s;}
+.svc-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,255,178,0.05),transparent);opacity:0;transition:opacity .4s;}
+.svc-card:hover{border-color:rgba(0,255,178,0.4);transform:translateY(-6px);}
+.svc-card:hover::before{opacity:1;}
+.svc-icon{width:44px;height:44px;border:1px solid rgba(0,255,178,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;font-size:1.2rem;}
+.svc-name{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:.7rem;}
+.svc-desc{font-size:.85rem;color:var(--dim);line-height:1.7;}
+.svc-price{font-size:.75rem;color:var(--neon);letter-spacing:.06em;margin-top:1.2rem;font-weight:500;}
+.svc-glow{position:absolute;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,178,0.08),transparent 70%);bottom:-50px;right:-50px;pointer-events:none;}
+
+/* Niche tabs */
+.ntabs{display:flex;gap:0;margin-top:2.5rem;border-bottom:1px solid var(--muted);}
+.ntab{padding:.8rem 2rem;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--dim);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'Space Grotesk',sans-serif;transition:color .3s;}
+.ntab.on{color:var(--neon);border-bottom-color:var(--neon);text-shadow:0 0 10px rgba(0,255,178,0.5);}
+.nc{display:none;margin-top:2.5rem;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;}
+.nc.on{display:grid;}
+.nc-list{display:flex;flex-direction:column;gap:1.2rem;}
+.nc-item{display:flex;gap:1rem;align-items:flex-start;}
+.nc-bar{width:2px;height:100%;background:linear-gradient(to bottom,var(--neon),transparent);flex-shrink:0;min-height:40px;}
+.nc-text strong{font-size:.92rem;color:var(--text);font-weight:500;display:block;margin-bottom:4px;}
+.nc-text span{font-size:.82rem;color:var(--dim);line-height:1.65;}
+.nc-visual{border:1px solid var(--glass-border);background:var(--glass);backdrop-filter:blur(20px);padding:2rem;display:flex;flex-direction:column;justify-content:space-between;min-height:280px;position:relative;overflow:hidden;}
+.nc-vis-glow{position:absolute;width:200px;height:200px;background:radial-gradient(circle,rgba(0,255,178,0.06),transparent 70%);top:-50px;right:-50px;}
+.nc-vis-lbl{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--neon);}
+.nc-vis-num{font-family:'Syne',sans-serif;font-size:3.5rem;font-weight:800;color:var(--text);line-height:1;text-shadow:0 0 40px rgba(0,255,178,0.2);}
+.nc-vis-sub{font-size:.78rem;color:var(--dim);}
+.nc-bars{display:flex;gap:5px;align-items:flex-end;height:60px;margin-top:1rem;}
+.bar{flex:1;background:var(--muted);border-radius:2px 2px 0 0;transition:background .3s;}
+.bar.hi{background:linear-gradient(to top,var(--neon),var(--neon3));box-shadow:0 0 10px rgba(0,255,178,0.4);}
+
+/* Process */
+.proc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;margin-top:3rem;}
+.proc{position:relative;padding:1.5rem;border-left:1px solid var(--muted);transition:border-color .4s;}
+.proc:hover{border-color:var(--neon);}
+.proc-num{font-family:'Syne',sans-serif;font-size:3.5rem;font-weight:800;color:var(--muted);line-height:1;margin-bottom:.5rem;}
+.proc-title{font-size:.92rem;font-weight:500;margin-bottom:.5rem;}
+.proc-desc{font-size:.82rem;color:var(--dim);line-height:1.65;}
+
+/* Pricing */
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1.5rem;margin-top:3rem;}
+.pc{border:1px solid var(--muted);padding:2.5rem;background:var(--bg3);transition:border-color .4s,transform .3s;position:relative;overflow:hidden;}
+.pc:hover{border-color:rgba(0,255,178,0.3);transform:translateY(-4px);}
+.pc.feat{border-color:rgba(0,255,178,0.4);background:rgba(0,255,178,0.04);}
+.pc.feat::after{content:'MOST POPULAR';position:absolute;top:1.2rem;right:1.2rem;font-size:.6rem;letter-spacing:.15em;color:var(--neon);border:1px solid rgba(0,255,178,0.3);padding:3px 8px;}
+.pc-tag{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--neon);margin-bottom:1rem;display:block;}
+.pc-name{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:.3rem;}
+.pc-price{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;color:var(--text);line-height:1;}
+.pc-period{font-size:.75rem;color:var(--dim);margin-bottom:1.5rem;}
+.pc-divider{border:none;border-top:1px solid var(--muted);margin:1.5rem 0;}
+.pc-feat{font-size:.82rem;color:var(--dim);padding:.4rem 0;display:flex;gap:.7rem;border-bottom:1px solid rgba(255,255,255,0.03);}
+.pc-feat:last-of-type{border:none;}
+.check{color:var(--neon);text-shadow:0 0 8px var(--neon);}
+.pc-btn{width:100%;padding:.9rem;margin-top:1.5rem;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .3s;border:1px solid var(--muted);background:none;color:var(--dim);font-family:'Space Grotesk',sans-serif;}
+.pc.feat .pc-btn{background:var(--neon);color:#000;border-color:var(--neon);font-weight:700;box-shadow:0 0 20px rgba(0,255,178,0.2);}
+.pc-btn:hover{border-color:var(--neon);color:var(--neon);}
+.pc.feat .pc-btn:hover{box-shadow:0 0 40px rgba(0,255,178,0.4);}
+
+/* Contact */
+#contact{max-width:800px;margin:0 auto;padding:7rem 2rem;text-align:center;position:relative;z-index:10;}
+.cf{margin-top:3rem;display:flex;flex-direction:column;gap:1rem;text-align:left;}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.cff label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:.5rem;}
+.cff input,.cff textarea,.cff select{width:100%;background:var(--bg3);border:1px solid var(--muted);color:var(--text);padding:.9rem 1.1rem;font-family:'Space Grotesk',sans-serif;font-size:.85rem;outline:none;transition:border-color .3s;}
+.cff input:focus,.cff textarea:focus,.cff select:focus{border-color:var(--neon);box-shadow:0 0 10px rgba(0,255,178,0.1);}
+.cff select option{background:var(--bg3);}
+.cff textarea{resize:vertical;min-height:110px;}
+.cf-sub{padding:1rem;background:var(--neon);color:#000;border:none;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;cursor:pointer;width:100%;font-family:'Space Grotesk',sans-serif;transition:all .3s;box-shadow:0 0 25px rgba(0,255,178,0.25);}
+.cf-sub:hover{box-shadow:0 0 50px rgba(0,255,178,0.5);}
+
+/* Footer */
+footer{border-top:1px solid var(--muted);padding:2.5rem 3rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;position:relative;z-index:10;}
+.footer-logo{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--neon);text-shadow:0 0 15px rgba(0,255,178,0.4);}
+.footer-links{display:flex;gap:2rem;}
+.footer-links a{font-size:.75rem;color:var(--dim);text-decoration:none;transition:color .3s;}
+.footer-links a:hover{color:var(--neon);}
+.footer-copy{font-size:.72rem;color:var(--muted);}
+
+/* Divider line */
+.neon-line{height:1px;background:linear-gradient(to right,transparent,var(--neon),var(--neon3),transparent);margin:0 3rem;opacity:.3;}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--neon);}
+
+@media(max-width:700px){
+  nav{padding:1.2rem 1.5rem;}
+  .nav-links{display:none;}
+  .cf-row{grid-template-columns:1fr;}
+  .nc.on{grid-template-columns:1fr;}
+  footer{padding:2rem 1.5rem;}
+  .float-stats{gap:.8rem;}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- Particle BG -->
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <div class="logo">Nex<span>AI</span></div>
+  <div class="nav-links">
+    <a href="#services">Services</a>
+    <a href="#niches">Industries</a>
+    <a href="#process">Process</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <a href="#contact" class="nav-cta">Start project</a>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <p class="hero-eyebrow">AI Automation · Luxury Websites · Real Results</p>
+    <h1>Automate. Dominate.<br><span class="g">Scale.</span></h1>
+    <p class="hero-sub">We build intelligent AI agents and cinematic 3D websites for real estate agencies and corporate teams who refuse to blend in.</p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-neon">Start a project</a>
+      <a href="#services" class="btn-ghost">See our work</a>
+    </div>
+    <div class="float-stats">
+      <div class="fstat"><div class="fstat-num">47+</div><div class="fstat-lbl">Projects delivered</div></div>
+      <div class="fstat"><div class="fstat-num">24/7</div><div class="fstat-lbl">AI agents running</div></div>
+      <div class="fstat"><div class="fstat-num">3×</div><div class="fstat-lbl">Avg lead increase</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="neon-line"></div>
+
+<!-- SERVICES -->
+<div id="services" class="sec">
+  <p class="sec-label">What we build</p>
+  <h2 class="sec-title">Three offerings.<br><span class="g">Infinite impact.</span></h2>
+  <div class="svc-grid">
+    <div class="svc-card">
+      <div class="svc-icon">✦</div>
+      <div class="svc-name">3D Luxury Website</div>
+      <div class="svc-desc">Cinematic, scroll-driven websites with 3D elements, particle effects, and glass morphism. Not a template — fully custom for your brand.</div>
+      <div class="svc-price">From PKR 40,000 · $150 USD</div>
+      <div class="svc-glow"></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-icon">◈</div>
+      <div class="svc-name">AI Agent Setup</div>
+      <div class="svc-desc">WhatsApp and web chatbots that handle inquiries, book meetings, follow up leads — automatically, without a single human touch.</div>
+      <div class="svc-price">From PKR 35,000 · $130 USD</div>
+      <div class="svc-glow"></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-icon">⬡</div>
+      <div class="svc-name">Full Automation Suite</div>
+      <div class="svc-desc">The complete system: premium website + AI agent + CRM + staff automation. Your entire operation — intelligent and autonomous.</div>
+      <div class="svc-price">From PKR 180,000 · $800 USD</div>
+      <div class="svc-glow"></div>
+    </div>
+  </div>
+</div>
+
+<div class="neon-line"></div>
+
+<!-- NICHES -->
+<div id="niches" class="sec-full" style="background:rgba(0,255,178,0.02);">
+  <div style="max-width:1100px;margin:0 auto;">
+    <p class="sec-label">Industries we serve</p>
+    <h2 class="sec-title">Built for those who<br><span class="g">move fast.</span></h2>
+    <div class="ntabs">
+      <button class="ntab on" onclick="switchN('re',this)">Real Estate</button>
+      <button class="ntab" onclick="switchN('hr',this)">HR & Corporate</button>
+    </div>
+
+    <div class="nc on" id="nc-re">
+      <div class="nc-list">
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>Instant property inquiry handling</strong><span>WhatsApp agent replies in seconds — property options, pricing, site visit booking. No staff needed at all.</span></div></div>
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>Automated lead follow-up</strong><span>Interested client gone quiet? Agent follows up at day 2, 5, and 10 — keeping your pipeline alive automatically.</span></div></div>
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>New listing broadcasts</strong><span>New property added to your sheet — agent instantly broadcasts to your entire buyer list with photos and details.</span></div></div>
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>Luxury property website</strong><span>Dark editorial aesthetic. 3D property cards. Scroll animations. The website your listings deserve.</span></div></div>
+      </div>
+      <div class="nc-visual">
+        <div class="nc-vis-glow"></div>
+        <div><div class="nc-vis-lbl">Avg. lead response time</div></div>
+        <div><div class="nc-vis-num">8s</div><div class="nc-vis-sub">vs 4 hours industry average</div></div>
+        <div class="nc-bars">
+          <div class="bar" style="height:25%"></div>
+          <div class="bar" style="height:40%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar hi" style="height:80%"></div>
+          <div class="bar hi" style="height:100%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nc" id="nc-hr">
+      <div class="nc-list">
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>Employee HR chatbot</strong><span>Staff ask leave balances, payroll dates, policies anytime. Agent handles 300+ query types — 24/7 without HR team.</span></div></div>
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>Recruitment automation</strong><span>CV received → AI screens → shortlist gets invite → calendar booked. Zero manual steps in the pipeline.</span></div></div>
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>Staff shift & attendance alerts</strong><span>Daily morning brief to every employee. Shift changes announced instantly. Manager gets EOD report automatically.</span></div></div>
+        <div class="nc-item"><div class="nc-bar"></div><div class="nc-text"><strong>Corporate portal website</strong><span>Clean, authoritative design. Services, case studies, careers page. Built to convert enterprise clients on first visit.</span></div></div>
+      </div>
+      <div class="nc-visual">
+        <div class="nc-vis-glow"></div>
+        <div><div class="nc-vis-lbl">HR query resolution rate</div></div>
+        <div><div class="nc-vis-num">92%</div><div class="nc-vis-sub">handled without human intervention</div></div>
+        <div class="nc-bars">
+          <div class="bar" style="height:35%"></div>
+          <div class="bar" style="height:52%"></div>
+          <div class="bar hi" style="height:70%"></div>
+          <div class="bar hi" style="height:85%"></div>
+          <div class="bar hi" style="height:92%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="neon-line"></div>
+
+<!-- PROCESS -->
+<div id="process" class="sec">
+  <p class="sec-label">How it works</p>
+  <h2 class="sec-title">Brief to live<br><span class="g">in 14 days.</span></h2>
+  <div class="proc-grid">
+    <div class="proc">
+      <div class="proc-num">01</div>
+      <div class="proc-title">Discovery call</div>
+      <div class="proc-desc">30 minutes. We learn your business, pain points, goals. You leave with a clear action plan.</div>
+    </div>
+    <div class="proc">
+      <div class="proc-num">02</div>
+      <div class="proc-title">Design & build</div>
+      <div class="proc-desc">Website + agent built in parallel. You see progress every 2 days — full transparency.</div>
+    </div>
+    <div class="proc">
+      <div class="proc-num">03</div>
+      <div class="proc-title">Test & refine</div>
+      <div class="proc-desc">Live testing with real scenarios. We fix until it's flawless — no extra charge.</div>
+    </div>
+    <div class="proc">
+      <div class="proc-num">04</div>
+      <div class="proc-title">Launch & support</div>
+      <div class="proc-desc">Go live. First month support included. Monthly retainer keeps everything running smoothly.</div>
+    </div>
+  </div>
+</div>
+
+<div class="neon-line"></div>
+
+<!-- PRICING -->
+<div id="pricing" class="sec-full">
+  <div style="max-width:1100px;margin:0 auto;">
+    <p class="sec-label">Investment</p>
+    <h2 class="sec-title">Clear pricing.<br><span class="g">No surprises.</span></h2>
+    <div class="price-grid">
+      <div class="pc">
+        <span class="pc-tag">Starter</span>
+        <div class="pc-name">Website Only</div>
+        <div class="pc-price">PKR 50k</div>
+        <div class="pc-period">one-time · $200 USD</div>
+        <hr class="pc-divider">
+        <div class="pc-feat"><span class="check">✦</span> 5-page 3D aesthetic website</div>
+        <div class="pc-feat"><span class="check">✦</span> Mobile responsive design</div>
+        <div class="pc-feat"><span class="check">✦</span> Contact form + WhatsApp button</div>
+        <div class="pc-feat"><span class="check">✦</span> Basic SEO setup</div>
+        <div class="pc-feat"><span class="check">✦</span> 1 revision round</div>
+        <button class="pc-btn" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get started →</button>
+      </div>
+      <div class="pc feat">
+        <span class="pc-tag">Pro</span>
+        <div class="pc-name">Website + Agent</div>
+        <div class="pc-price">PKR 100k</div>
+        <div class="pc-period">one-time · $450 USD + monthly retainer</div>
+        <hr class="pc-divider">
+        <div class="pc-feat"><span class="check">✦</span> 7-page luxury 3D website</div>
+        <div class="pc-feat"><span class="check">✦</span> WhatsApp AI agent setup</div>
+        <div class="pc-feat"><span class="check">✦</span> Lead capture + follow-up automation</div>
+        <div class="pc-feat"><span class="check">✦</span> Calendar meeting integration</div>
+        <div class="pc-feat"><span class="check">✦</span> 1 month free support</div>
+        <button class="pc-btn" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get started →</button>
+      </div>
+      <div class="pc">
+        <span class="pc-tag">Elite</span>
+        <div class="pc-name">Full Suite</div>
+        <div class="pc-price">PKR 220k</div>
+        <div class="pc-period">one-time · $900 USD + monthly retainer</div>
+        <hr class="pc-divider">
+        <div class="pc-feat"><span class="check">✦</span> Premium website 10+ pages</div>
+        <div class="pc-feat"><span class="check">✦</span> WhatsApp + Voice agent</div>
+        <div class="pc-feat"><span class="check">✦</span> Full staff automation</div>
+        <div class="pc-feat"><span class="check">✦</span> CRM integration</div>
+        <div class="pc-feat"><span class="check">✦</span> Analytics dashboard</div>
+        <div class="pc-feat"><span class="check">✦</span> 3 months support</div>
+        <button class="pc-btn" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get started →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="neon-line"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <p class="sec-label">Let's talk</p>
+  <h2 class="sec-title">Ready to build<br><span class="g">something exceptional?</span></h2>
+  <p style="color:var(--dim);font-size:.9rem;margin-top:.5rem;">Fill this form — we respond within 24 hours on WhatsApp.</p>
+  <div class="cf">
+    <div class="cf-row">
+      <div class="cff"><label>Your name</label><input type="text" placeholder="Ahmed Khan"></div>
+      <div class="cff"><label>Business name</label><input type="text" placeholder="Khan Properties"></div>
+    </div>
+    <div class="cf-row">
+      <div class="cff"><label>WhatsApp number</label><input type="text" placeholder="+92 300 0000000"></div>
+      <div class="cff"><label>Industry</label><select><option>Real Estate</option><option>HR / Corporate</option><option>Other</option></select></div>
+    </div>
+    <div class="cff"><label>Package interest</label><select><option>Starter — Website only (PKR 50k)</option><option>Pro — Website + Agent (PKR 100k)</option><option>Elite — Full Suite (PKR 220k)</option><option>Not sure yet</option></select></div>
+    <div class="cff"><label>Tell us about your business</label><textarea placeholder="Brief description of your business and what you want to achieve..."></textarea></div>
+    <button class="cf-sub" onclick="this.textContent='✓ Sent! We will contact you within 24 hours.';this.style.background='#004D35';">Send enquiry →</button>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">NexAI</div>
+  <div class="footer-links">
+    <a href="#">Instagram</a>
+    <a href="#">LinkedIn</a>
+    <a href="#">WhatsApp</a>
+  </div>
+  <div class="footer-copy">© 2025 NexAI · All rights reserved.</div>
+</footer>
+
+<script>
+/* --- Cursor --- */
+const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
+document.addEventListener('mousemove',e=>{
+  cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';
+  setTimeout(()=>{ring.style.left=e.clientX+'px';ring.style.top=e.clientY+'px';},80);
+});
+document.querySelectorAll('a,button,.svc-card,.pc,.ntab').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px';ring.style.width='50px';ring.style.height='50px';});
+  el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px';ring.style.width='36px';ring.style.height='36px';});
+});
+
+/* --- Particle BG --- */
+const bgC=document.getElementById('bg-canvas');
+const bgX=bgC.getContext('2d');
+let W,H,particles=[];
+function resizeBg(){W=bgC.width=window.innerWidth;H=bgC.height=window.innerHeight;}
+resizeBg();window.addEventListener('resize',resizeBg);
+class Particle{
+  constructor(){this.reset();}
+  reset(){
+    this.x=Math.random()*W;this.y=Math.random()*H;
+    this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;
+    this.r=Math.random()*1.5+.3;this.a=Math.random()*.6+.1;
+    const c=[['0,255,178'],['180,0,255'],['0,180,255']];
+    this.col=c[Math.floor(Math.random()*c.length)][0];
+  }
+  draw(){
+    bgX.beginPath();bgX.arc(this.x,this.y,this.r,0,Math.PI*2);
+    bgX.fillStyle=`rgba(${this.col},${this.a})`;bgX.fill();
+  }
+  update(){
+    this.x+=this.vx;this.y+=this.vy;
+    if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset();
+  }
+}
+for(let i=0;i<180;i++)particles.push(new Particle());
+function animBg(){
+  bgX.clearRect(0,0,W,H);
+  // Draw connection lines
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<100){
+        bgX.beginPath();
+        bgX.moveTo(particles[i].x,particles[i].y);
+        bgX.lineTo(particles[j].x,particles[j].y);
+        bgX.strokeStyle=`rgba(0,255,178,${.06*(1-d/100)})`;
+        bgX.lineWidth=.5;bgX.stroke();
+      }
+    }
+  }
+  particles.forEach(p=>{p.update();p.draw();});
+  requestAnimationFrame(animBg);
+}
+animBg();
+
+/* --- Hero 3D shapes canvas --- */
+const hC=document.getElementById('hero-canvas');
+const hX=hC.getContext('2d');
+hC.style.position='absolute';hC.style.inset='0';hC.style.pointerEvents='none';
+function resizeHero(){hC.width=hC.offsetWidth;hC.height=hC.offsetHeight;}
+resizeHero();
+let t3d=0;
+const shapes=[
+  {x:.12,y:.2,r:60,type:'ring',color:'0,255,178',speed:.8,rotOffset:0},
+  {x:.88,y:.25,r:45,type:'cube',color:'180,0,255',speed:1.1,rotOffset:1},
+  {x:.05,y:.7,r:35,type:'sphere',color:'0,180,255',speed:.7,rotOffset:2},
+  {x:.95,y:.65,r:50,type:'ring',color:'0,255,178',speed:.9,rotOffset:3},
+  {x:.5,y:.08,r:30,type:'sphere',color:'180,0,255',speed:1.2,rotOffset:1.5},
+];
+function drawRing(x,y,r,a,col,t){
+  hX.save();hX.translate(x,y);hX.rotate(t);
+  hX.beginPath();
+  hX.ellipse(0,0,r,r*.35,0,0,Math.PI*2);
+  hX.strokeStyle=`rgba(${col},${a})`;hX.lineWidth=1.5;hX.stroke();
+  hX.beginPath();
+  hX.ellipse(0,0,r*.7,r*.7*.35,0,0,Math.PI*2);
+  hX.strokeStyle=`rgba(${col},${a*.5})`;hX.lineWidth=1;hX.stroke();
+  hX.restore();
+}
+function drawCube(x,y,s,a,col,t){
+  hX.save();hX.translate(x,y);hX.rotate(t);
+  const h=s*.5;
+  hX.strokeStyle=`rgba(${col},${a})`;hX.lineWidth=1.2;
+  // front face
+  hX.strokeRect(-h,-h,s,s);
+  // back face (offset)
+  const off=s*.3;
+  hX.strokeRect(-h+off,-h-off,s,s);
+  // connecting lines
+  [[-h,-h],[-h+s,-h],[-h+s,-h+s],[-h,-h+s]].forEach(([px,py])=>{
+    hX.beginPath();hX.moveTo(px,py);hX.lineTo(px+off,py-off);hX.stroke();
+  });
+  hX.restore();
+}
+function drawSphere(x,y,r,a,col,t){
+  hX.save();hX.translate(x,y);
+  const g=hX.createRadialGradient(0,0,r*.1,0,0,r);
+  g.addColorStop(0,`rgba(${col},${a*.6})`);
+  g.addColorStop(1,`rgba(${col},0)`);
+  hX.beginPath();hX.arc(0,0,r,0,Math.PI*2);
+  hX.fillStyle=g;hX.fill();
+  hX.strokeStyle=`rgba(${col},${a*.4})`;hX.lineWidth=1;hX.stroke();
+  // latitude lines
+  hX.rotate(t);
+  for(let i=1;i<3;i++){
+    hX.beginPath();
+    hX.ellipse(0,0,r,r*.3*i,0,0,Math.PI*2);
+    hX.strokeStyle=`rgba(${col},${a*.3})`;hX.lineWidth=.8;hX.stroke();
+  }
+  hX.restore();
+}
+function animHero(){
+  hX.clearRect(0,0,hC.width,hC.height);
+  t3d+=.008;
+  shapes.forEach(s=>{
+    const x=s.x*hC.width,y=s.y*hC.height;
+    const fl=Math.sin(t3d*s.speed+s.rotOffset)*8;
+    const rot=t3d*s.speed*0.5+s.rotOffset;
+    const a=.5+Math.sin(t3d*s.speed*0.7+s.rotOffset)*.2;
+    if(s.type==='ring')drawRing(x,y+fl,s.r,a,s.color,rot);
+    else if(s.type==='cube')drawCube(x,y+fl,s.r,a,s.color,rot);
+    else drawSphere(x,y+fl,s.r,a,s.color,rot);
+  });
+  requestAnimationFrame(animHero);
+}
+new ResizeObserver(resizeHero).observe(hC.parentElement);
+animHero();
+
+/* --- Niche tabs --- */
+function switchN(name,btn){
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nc').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('nc-'+name).classList.add('on');
+}
+
+/* --- Parallax on scroll --- */
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  const hero=document.getElementById('hero');
+  if(hero)hero.style.transform=`translateY(${y*.4}px)`;
+});
+</script>
+</body>
+</html>
